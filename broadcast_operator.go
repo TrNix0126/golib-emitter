@@ -2,9 +2,11 @@ package golibemitter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/vmihailenco/msgpack/v5"
+	"gitlab.com/golibs-starter/golib/log"
 )
 
 type BroadcastOperator struct {
@@ -107,4 +109,55 @@ func (bo *BroadcastOperator) Emit(event string, args ...interface{}) error {
 		broadcastChannel = fmt.Sprintf("%s%s#", broadcastChannel, bo.rooms[0])
 	}
 	return bo.redisClient.Publish(context.Background(), broadcastChannel, b).Err()
+}
+
+func (bo *BroadcastOperator) SocketJoins(rooms ...string) {
+	request := map[string]interface{}{
+		"type": PacketType["REMOTE_JOIN"],
+		"opts": map[string]interface{}{
+			"rooms":  bo.rooms,
+			"except": bo.exceptRooms,
+		},
+		"rooms": rooms,
+	}
+	b, err := json.Marshal(request)
+	if err != nil {
+		log.Errorf("socket joins: could not serialize: %v", err)
+		return
+	}
+	bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b)
+}
+
+func (bo *BroadcastOperator) SocketLeave(rooms ...string) {
+	request := map[string]interface{}{
+		"type": PacketType["REMOTE_LEAVE"],
+		"opts": map[string]interface{}{
+			"rooms":  bo.rooms,
+			"except": bo.exceptRooms,
+		},
+		"rooms": rooms,
+	}
+	b, err := json.Marshal(request)
+	if err != nil {
+		log.Errorf("socket joins: could not serialize: %v", err)
+		return
+	}
+	bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b)
+}
+
+func (bo BroadcastOperator) DisconnectSockets(close bool) {
+	request := map[string]interface{}{
+		"type": PacketType["REMOTE_DISCONNECT"],
+		"opts": map[string]interface{}{
+			"rooms":  bo.rooms,
+			"except": bo.exceptRooms,
+		},
+		"close": close,
+	}
+	b, err := json.Marshal(request)
+	if err != nil {
+		log.Errorf("socket joins: could not serialize: %v", err)
+		return
+	}
+	bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b)
 }
