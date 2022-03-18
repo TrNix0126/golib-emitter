@@ -70,3 +70,15 @@ func (e *Emitter) In(rooms ...string) *BroadcastOperator {
 func (e *Emitter) Except(rooms ...string) *BroadcastOperator {
 	return NewBroadcastOperator(e.redisClient, e.broadcastOptions).Except(rooms...)
 }
+
+func (e *Emitter) SocketJoins(rooms ...string) {
+	NewBroadcastOperator(e.redisClient, e.broadcastOptions).SocketJoins(rooms...)
+}
+
+func (e *Emitter) SocketLeave(rooms ...string) {
+	NewBroadcastOperator(e.redisClient, e.broadcastOptions).SocketLeave(rooms...)
+}
+
+func (e *Emitter) DisconnectSockets(close bool) {
+	NewBroadcastOperator(e.redisClient, e.broadcastOptions).DisconnectSockets(close)
+}
