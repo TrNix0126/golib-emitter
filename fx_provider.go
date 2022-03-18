@@ -8,6 +8,6 @@ import (
 func EnableEmitter() fx.Option {
 	return fx.Options(
 		golib.ProvideProps(NewEmitterProperties),
-		fx.Provide(NewEmitter),
+		fx.Provide(NewEmitterFromProperties),
 	)
 }
