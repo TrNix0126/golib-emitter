@@ -61,7 +61,7 @@ func (bo *BroadcastOperator) Except(rooms ...string) *BroadcastOperator {
 
 func (bo *BroadcastOperator) Compress(compress bool) *BroadcastOperator {
 	flags := &BroadcastFlags{
-		compress: compress,
+		Compress: compress,
 	}
 	return &BroadcastOperator{
 		redisClient:     bo.redisClient,
@@ -74,7 +74,7 @@ func (bo *BroadcastOperator) Compress(compress bool) *BroadcastOperator {
 
 func (bo *BroadcastOperator) Volatile(volatile bool) *BroadcastOperator {
 	flags := &BroadcastFlags{
-		volatile: volatile,
+		Volatile: volatile,
 	}
 	return &BroadcastOperator{
 		redisClient:     bo.redisClient,
