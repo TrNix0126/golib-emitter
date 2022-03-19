@@ -1,10 +1,13 @@
 package golibemitter
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 )
+
+const UID = "emitter"
 
 type Emitter struct {
 	emitterOption    *EmitterOptions
@@ -71,14 +74,23 @@ func (e *Emitter) Except(rooms ...string) *BroadcastOperator {
 	return NewBroadcastOperator(e.redisClient, e.broadcastOptions).Except(rooms...)
 }
 
-func (e *Emitter) SocketJoins(rooms ...string) {
-	NewBroadcastOperator(e.redisClient, e.broadcastOptions).SocketJoins(rooms...)
+func (e *Emitter) SocketJoins(rooms ...string) error {
+	return NewBroadcastOperator(e.redisClient, e.broadcastOptions).SocketJoins(rooms...)
 }
 
-func (e *Emitter) SocketLeave(rooms ...string) {
-	NewBroadcastOperator(e.redisClient, e.broadcastOptions).SocketLeave(rooms...)
+func (e *Emitter) SocketLeave(rooms ...string) error {
+	return NewBroadcastOperator(e.redisClient, e.broadcastOptions).SocketLeave(rooms...)
 }
 
-func (e *Emitter) DisconnectSockets(close bool) {
-	NewBroadcastOperator(e.redisClient, e.broadcastOptions).DisconnectSockets(close)
+func (e *Emitter) DisconnectSockets(close bool) error {
+	return NewBroadcastOperator(e.redisClient, e.broadcastOptions).DisconnectSockets(close)
+}
+
+func (e *Emitter) ServerSideEmit(args ...interface{}) error {
+	request := map[string]interface{}{
+		"uid":  UID,
+		"type": RequestType["SERVER_SIDE_EMIT"],
+		"data": args,
+	}
+	return e.redisClient.Publish(context.Background(), e.broadcastOptions.BroadcastChannel, request).Err()
 }

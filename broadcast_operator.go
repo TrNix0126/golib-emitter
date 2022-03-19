@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/vmihailenco/msgpack/v5"
-	"gitlab.com/golibs-starter/golib/log"
 )
 
 type BroadcastOperator struct {
@@ -97,7 +96,7 @@ func (bo *BroadcastOperator) Emit(event string, args ...interface{}) error {
 	if bo.flags.Volatile {
 		flags["volatile"] = true
 	}
-	pack = append(pack, "emitter", map[string]interface{}{
+	pack = append(pack, UID, map[string]interface{}{
 		"type": PacketType["EVENT"],
 		"data": data,
 		"nsp":  bo.broadcastOption.Namespace,
@@ -120,7 +119,7 @@ func (bo *BroadcastOperator) Emit(event string, args ...interface{}) error {
 	return bo.redisClient.Publish(context.Background(), broadcastChannel, buf.Bytes()).Err()
 }
 
-func (bo *BroadcastOperator) SocketJoins(rooms ...string) {
+func (bo *BroadcastOperator) SocketJoins(rooms ...string) error {
 	request := map[string]interface{}{
 		"type": PacketType["REMOTE_JOIN"],
 		"opts": map[string]interface{}{
@@ -131,13 +130,12 @@ func (bo *BroadcastOperator) SocketJoins(rooms ...string) {
 	}
 	b, err := json.Marshal(request)
 	if err != nil {
-		log.Errorf("socket joins: could not serialize: %v", err)
-		return
+		return fmt.Errorf("socket joins: could not serialize: %v", err)
 	}
-	bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b)
+	return bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b).Err()
 }
 
-func (bo *BroadcastOperator) SocketLeave(rooms ...string) {
+func (bo *BroadcastOperator) SocketLeave(rooms ...string) error {
 	request := map[string]interface{}{
 		"type": PacketType["REMOTE_LEAVE"],
 		"opts": map[string]interface{}{
@@ -148,13 +146,12 @@ func (bo *BroadcastOperator) SocketLeave(rooms ...string) {
 	}
 	b, err := json.Marshal(request)
 	if err != nil {
-		log.Errorf("socket joins: could not serialize: %v", err)
-		return
+		return fmt.Errorf("socket leave: could not serialize: %v", err)
 	}
-	bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b)
+	return bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b).Err()
 }
 
-func (bo BroadcastOperator) DisconnectSockets(close bool) {
+func (bo BroadcastOperator) DisconnectSockets(close bool) error {
 	request := map[string]interface{}{
 		"type": PacketType["REMOTE_DISCONNECT"],
 		"opts": map[string]interface{}{
@@ -165,8 +162,7 @@ func (bo BroadcastOperator) DisconnectSockets(close bool) {
 	}
 	b, err := json.Marshal(request)
 	if err != nil {
-		log.Errorf("socket joins: could not serialize: %v", err)
-		return
+		return fmt.Errorf("disconnect sockets: could not serialize: %v", err)
 	}
-	bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b)
+	return bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b).Err()
 }
