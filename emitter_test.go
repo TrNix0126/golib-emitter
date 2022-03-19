@@ -36,4 +36,9 @@ func TestEmitter_Emit(t *testing.T) {
 		err = emitter.To("room").Emit("hello")
 		assert.Nil(t, err)
 	})
+	t.Run("Chain", func(t *testing.T) {
+		bo := emitter.To("room1").Except("room2")
+		assert.Contains(t, bo.rooms, "room1")
+		assert.Contains(t, bo.exceptRooms, "room2")
+	})
 }
