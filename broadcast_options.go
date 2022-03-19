@@ -9,6 +9,9 @@ type BroadcastOptions struct {
 }
 
 func NewBroadcastOptions(key string, namespace string) *BroadcastOptions {
+	if len(key) == 0 {
+		key = DefaultKey
+	}
 	if len(namespace) == 0 {
 		namespace = "/"
 	}
