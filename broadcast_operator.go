@@ -1,6 +1,7 @@
 package golibemitter
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -89,18 +90,26 @@ func (bo *BroadcastOperator) Emit(event string, args ...interface{}) error {
 	data := []interface{}{event}
 	data = append(data, args...)
 	pack := make([]interface{}, 0)
-	pack = append(pack, "emitter")
-	pack = append(pack, map[string]interface{}{
+	flags := make(map[string]interface{})
+	if bo.flags.Compress {
+		flags["compress"] = true
+	}
+	if bo.flags.Volatile {
+		flags["volatile"] = true
+	}
+	pack = append(pack, "emitter", map[string]interface{}{
 		"type": PacketType["EVENT"],
 		"data": data,
 		"nsp":  bo.broadcastOption.Namespace,
-	})
-	pack = append(pack, map[string]interface{}{
+	}, map[string]interface{}{
 		"rooms":  bo.rooms,
-		"flags":  bo.flags,
+		"flags":  flags,
 		"except": bo.exceptRooms,
 	})
-	b, err := msgpack.Marshal(pack)
+	var buf bytes.Buffer
+	enc := msgpack.NewEncoder(&buf)
+	enc.SetCustomStructTag("json")
+	err := enc.Encode(pack)
 	if err != nil {
 		return fmt.Errorf("broadcast operator: could not encode data: %v", err)
 	}
@@ -108,7 +117,7 @@ func (bo *BroadcastOperator) Emit(event string, args ...interface{}) error {
 	if len(bo.rooms) == 1 {
 		broadcastChannel = fmt.Sprintf("%s%s#", broadcastChannel, bo.rooms[0])
 	}
-	return bo.redisClient.Publish(context.Background(), broadcastChannel, b).Err()
+	return bo.redisClient.Publish(context.Background(), broadcastChannel, buf.Bytes()).Err()
 }
 
 func (bo *BroadcastOperator) SocketJoins(rooms ...string) {
