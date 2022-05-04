@@ -16,6 +16,8 @@ app.emitter:
   username: default
   password: secret
   enableTLS: true
+  key: key # default is 'socket.io'
+  namespace: ns # default is '/'
 ```
 
 Update bootstrap fx container
