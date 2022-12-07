@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/vmihailenco/msgpack/v5"
+	"strings"
 )
 
 type BroadcastOperator struct {
@@ -30,7 +31,7 @@ func NewBroadcastOperator(redisClient *redis.Client, broadcastOption *BroadcastO
 func (bo *BroadcastOperator) To(rooms ...string) *BroadcastOperator {
 	onlyRooms := make([]string, 0)
 	for _, room := range rooms {
-		onlyRooms = append(onlyRooms, room)
+		onlyRooms = append(onlyRooms, strings.ToLower(room))
 	}
 	return &BroadcastOperator{
 		redisClient:     bo.redisClient,
@@ -48,7 +49,7 @@ func (bo *BroadcastOperator) In(rooms ...string) *BroadcastOperator {
 func (bo *BroadcastOperator) Except(rooms ...string) *BroadcastOperator {
 	exceptRooms := make([]string, 0)
 	for _, room := range rooms {
-		exceptRooms = append(exceptRooms, room)
+		exceptRooms = append(exceptRooms, strings.ToLower(room))
 	}
 	return &BroadcastOperator{
 		redisClient:     bo.redisClient,
@@ -126,7 +127,7 @@ func (bo *BroadcastOperator) SocketJoins(rooms ...string) error {
 			"rooms":  bo.rooms,
 			"except": bo.exceptRooms,
 		},
-		"rooms": rooms,
+		"rooms": bo.roomsToLowerCase(rooms...),
 	}
 	b, err := json.Marshal(request)
 	if err != nil {
@@ -142,7 +143,7 @@ func (bo *BroadcastOperator) SocketLeave(rooms ...string) error {
 			"rooms":  bo.rooms,
 			"except": bo.exceptRooms,
 		},
-		"rooms": rooms,
+		"rooms": bo.roomsToLowerCase(rooms...),
 	}
 	b, err := json.Marshal(request)
 	if err != nil {
@@ -151,7 +152,7 @@ func (bo *BroadcastOperator) SocketLeave(rooms ...string) error {
 	return bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b).Err()
 }
 
-func (bo BroadcastOperator) DisconnectSockets(close bool) error {
+func (bo *BroadcastOperator) DisconnectSockets(close bool) error {
 	request := map[string]interface{}{
 		"type": PacketType["REMOTE_DISCONNECT"],
 		"opts": map[string]interface{}{
@@ -165,4 +166,12 @@ func (bo BroadcastOperator) DisconnectSockets(close bool) error {
 		return fmt.Errorf("disconnect sockets: could not serialize: %v", err)
 	}
 	return bo.redisClient.Publish(context.Background(), bo.broadcastOption.RequestChannel, b).Err()
+}
+
+func (bo BroadcastOperator) roomsToLowerCase(rooms ...string) []string {
+	roomsInLowerCase := make([]string, len(rooms))
+	for _, room := range rooms {
+		roomsInLowerCase = append(roomsInLowerCase, strings.ToLower(room))
+	}
+	return roomsInLowerCase
 }
