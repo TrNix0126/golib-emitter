@@ -32,12 +32,10 @@ golibemitter.EnableEmitter()
 package emitter
 
 import (
-	"github.com/go-playground/locales/da"
 	"gitlab.com/technixo/golib-emitter"
 )
 
 type NeedEmitter struct {
-	emitter *golibemitter.Emitter
 }
 
 type ExampleJsonData struct {
@@ -47,12 +45,18 @@ type ExampleJsonData struct {
 
 // EmitAll emit event to all
 func (ne *NeedEmitter) EmitAll() {
-	ne.emitter.Emit("event", "message")
+	err := golibemitter.Emit("event", "message")
+	if err != nil {
+		// Error handler
+	}
 }
 
 // EmitRooms emit event to rooms
 func (ne *NeedEmitter) EmitRooms() {
-	ne.emitter.To("room1", "room2").Emit("event", "message")
+	err := golibemitter.To("room1", "room2").Emit("event", "message")
+	if err != nil {
+		// Error handler
+	}
 }
 
 // EmitJSON emit json data message
@@ -61,6 +65,9 @@ func (ne *NeedEmitter) EmitJSON() {
 		FirstMessage:  "this is first message",
 		SecondMessage: "this is second message",
 	}
-	ne.emitter.Emit("event", data)
+	err := golibemitter.Emit("event", data)
+	if err != nil {
+		// Error handler 
+	}
 }
 ```
