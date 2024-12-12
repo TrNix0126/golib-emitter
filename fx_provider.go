@@ -1,7 +1,7 @@
 package golibemitter
 
 import (
-	"gitlab.com/golibs-starter/golib"
+	"github.com/golibs-starter/golib"
 	"go.uber.org/fx"
 )
 

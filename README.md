@@ -3,7 +3,7 @@
 ## Installation
 
 ```shell
-go get gitlab.com/technixo/golib-emitter
+go get github.com/TrNix0126/golib-emitter
 ```
 
 Update configuration
@@ -32,7 +32,7 @@ golibemitter.EnableEmitter()
 package emitter
 
 import (
-	"gitlab.com/technixo/golib-emitter"
+	"github.com/TrNix0126/golib-emitter"
 )
 
 type NeedEmitter struct {

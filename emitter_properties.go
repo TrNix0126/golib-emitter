@@ -1,7 +1,7 @@
 package golibemitter
 
 import (
-	"gitlab.com/golibs-starter/golib/config"
+	"github.com/golibs-starter/golib/config"
 )
 
 // EmitterProperties represents websocket emitter properties
